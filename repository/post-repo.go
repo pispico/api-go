@@ -1,45 +1,48 @@
 package repository
 
 import (
-	"api-go/entity"
 	"context"
 	"log"
 
+	"api-go/entity"
+
 	"cloud.google.com/go/firestore"
+	"google.golang.org/api/iterator"
 )
 
 type PostRepository interface {
-	Save(post *entity.Post) (*entity.Post, error)
+	Save(*entity.Post) (*entity.Post, error)
 	FindAll() ([]entity.Post, error)
 }
 
 type repo struct{}
-
-func NewPostRepository() PostRepository {
-	return &repo{}
-}
 
 const (
 	projectId      string = "sublime-index-353100"
 	collectionName string = "posts"
 )
 
+//NewPostRepository
+
+func NewPostRepository() PostRepository {
+	return &repo{}
+}
+
 func (*repo) Save(post *entity.Post) (*entity.Post, error) {
 	ctx := context.Background()
 	client, err := firestore.NewClient(ctx, projectId)
 	if err != nil {
-		log.Fatalln("Failed to create client google filestore", err)
+		log.Fatalf("Failed to Create a Firestore Client: %v", err)
 		return nil, err
 	}
 	defer client.Close()
-
 	_, _, err = client.Collection(collectionName).Add(ctx, map[string]interface{}{
 		"ID":    post.ID,
 		"Title": post.Title,
 		"Text":  post.Text,
 	})
 	if err != nil {
-		log.Fatalln("Failed adding new post", err)
+		log.Fatalf("Failed to adding a new post: %v", err)
 		return nil, err
 	}
 
@@ -51,17 +54,20 @@ func (*repo) FindAll() ([]entity.Post, error) {
 	ctx := context.Background()
 	client, err := firestore.NewClient(ctx, projectId)
 	if err != nil {
-		log.Fatalf("Failed to create client google filestore: %v", err)
+		log.Fatalf("Failed to Create a Firestore Client: %v", err)
 		return nil, err
 	}
-
 	defer client.Close()
 	var posts []entity.Post
-	iterator := client.Collection(collectionName).Documents(ctx)
+
+	itr := client.Collection(collectionName).Documents(ctx)
 	for {
-		doc, err := iterator.Next()
+		doc, err := itr.Next()
+		if err == iterator.Done {
+			break
+		}
 		if err != nil {
-			log.Fatalln("Failed to iterate list", err)
+			log.Fatalf("Failed to iterate the list of posts: %v", err)
 			return nil, err
 		}
 
@@ -73,5 +79,4 @@ func (*repo) FindAll() ([]entity.Post, error) {
 		posts = append(posts, post)
 	}
 	return posts, nil
-
 }
