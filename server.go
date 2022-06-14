@@ -1,6 +1,7 @@
 package main
 
 //curl -X POST http://localhost:8080/posts -H 'Content-Type: application/json' -d '{"title":"williambook","text":"nicetexthere"}'
+// $env:GOOGLE_APPLICATION_CREDENTIALS="C:\Users\PATHTOKEY"
 import (
 	"fmt"
 	"log"
@@ -25,5 +26,3 @@ func main() {
 	log.Fatalln(http.ListenAndServe(port, router))
 
 }
-
-//GOOGLE_APPLICATION_CREDENTIALS=/pathtokey
